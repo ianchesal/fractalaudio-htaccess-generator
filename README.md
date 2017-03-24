@@ -4,7 +4,10 @@ We've had problems with users using Tor to mask their IPs and then harass users 
 
 To test the script on your OS X machine:
 
-   ./htaccess-generator.rb --path . --user $(whoami) --group staff
+
+```
+./htaccess-generator.rb --path . --user $(whoami) --group staff
+```
 
 Once run, you should see `.htaccess` file on disk that has a long list of `Deny` IP addresses in it that were gathered from the Tor project's master exit node catalog.
 
@@ -12,4 +15,4 @@ It's fairly generic Ruby and should run just fine with Ruby 2.0 and beyond which
 
 ## Authors
 
-* Ian Chesal <ian.chesal@gmail.com>
+Ian Chesal <ian.chesal@gmail.com>
