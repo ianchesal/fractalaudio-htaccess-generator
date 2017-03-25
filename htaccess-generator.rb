@@ -134,6 +134,9 @@ File.delete(TMP_FILE) if File.exist?(TMP_FILE)
 
 logger.info("Writing #{TMP_FILE}")
 File.open("#{TMP_FILE}", 'w') do |htfile|
+  htfile.write("# This file was automatically generated on #{Time.now()} by the\n")
+  htfile.write("# #{File.expand_path(__FILE__)} script.\n")
+  htfile.write("# Any edits made to this file will be automatically overwritten!\n")
   htfile.write(HTACCESS_TOP)
   options[:ports].each do |port|
     url = "#{options[:torurl]}?ip=#{IP}&port=#{port}"
