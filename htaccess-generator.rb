@@ -83,7 +83,8 @@ options = {
   group: 'xenforo',
   site: 'forum.fractalaudio.com',
   ports: %w(80 443),
-  torurl:  'https://check.torproject.org/cgi-bin/TorBulkExitList.py'
+  torurl:  'https://check.torproject.org/cgi-bin/TorBulkExitList.py',
+  debug: false
 }
 
 parser = OptionParser.new do |opts|
@@ -108,6 +109,10 @@ parser = OptionParser.new do |opts|
     options[:torurl] = torurl
   end
 
+  opts.on('-d', '--debug', 'Debug messages') do |debug|
+    options[:debug] = true
+  end
+
 	opts.on('-h', '--help', 'Displays Help') do
 		puts opts
 		exit
@@ -117,15 +122,16 @@ parser.parse!
 
 logger = Logger.new(STDOUT)
 logger.level = Logger::INFO
+logger.level = Logger::DEBUG if options[:debug]
 
 IP = Resolv.getaddress(options[:site])
 TMP_FILE = File.join(options[:path], '.htaccess.tmp')
 REL_FILE = File.join(options[:path], '.htaccess')
 
-logger.info("Deleting #{TMP_FILE}") if File.exist?(TMP_FILE)
+logger.debug("Deleting #{TMP_FILE}") if File.exist?(TMP_FILE)
 File.delete(TMP_FILE) if File.exist?(TMP_FILE)
 
-logger.info("Writing #{TMP_FILE}")
+logger.debug("Writing #{TMP_FILE}")
 File.open("#{TMP_FILE}", 'w') do |htfile|
   htfile.write("# This file was automatically generated on #{Time.now()} by the\n")
   htfile.write("# #{File.expand_path(__FILE__)} script.\n")
@@ -135,7 +141,7 @@ File.open("#{TMP_FILE}", 'w') do |htfile|
   htfile.write("\tRequire all granted\n")
   options[:ports].each do |port|
     url = "#{options[:torurl]}?ip=#{IP}&port=#{port}"
-    logger.info("Fetching contents from: #{url}")
+    logger.debug("Fetching contents from: #{url}")
     open_url(url).each_line do |line|
       htfile.write("\t" + line) if line.start_with?('#')
       next if line.start_with?('#')
@@ -147,11 +153,11 @@ File.open("#{TMP_FILE}", 'w') do |htfile|
   htfile.write(HTACCESS_BOT)
 end
 
-logger.info("Done writing #{TMP_FILE}")
+logger.debug("Done writing #{TMP_FILE}")
 FileUtils.chown(options[:user], options[:group], TMP_FILE)
 File.chmod(0644, TMP_FILE)
-logger.info("Renaming #{TMP_FILE} -> #{REL_FILE}")
+logger.debug("Renaming #{TMP_FILE} -> #{REL_FILE}")
 File.rename(TMP_FILE, REL_FILE)
 
-logger.info("Done")
+logger.info("New #{REL_FILE} written at #{Time.now()}")
 exit(0)
