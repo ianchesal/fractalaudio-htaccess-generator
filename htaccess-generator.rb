@@ -23,52 +23,51 @@ ErrorDocument 501 default
 ErrorDocument 503 default
 
 <IfModule mod_rewrite.c>
-	RewriteEngine On
+  RewriteEngine On
 
-	# This redirects everything to the SSL version of the site
+  # This redirects everything to the SSL version of the site
   RewriteCond %{HTTPS} !=on
   RewriteCond %{REQUEST_URI} !^/[0-9]+\..+\.cpaneldcv$
   RewriteCond %{REQUEST_URI} !^/[A-F0-9]{32}\.txt(?:\ Comodo\ DCV)?$
   RewriteCond %{REQUEST_URI} !^/\.well-known/acme-challenge/[0-9a-zA-Z_-]+$
-	RewriteRule ^/?(.*) https://forum.fractalaudio.com/$1 [R=301,L]
+  RewriteRule ^/?(.*) https://forum.fractalaudio.com/$1 [R=301,L]
 
-	# This is for VBSEO URL rewriting. It keeps thread links from the old VB4
-	# forum "alive" on the new Xenforo forum.
+  # This is for VBSEO URL rewriting. It keeps thread links from the old VB4
+  # forum "alive" on the new Xenforo forum.
   RewriteCond %{REQUEST_URI} !^/[0-9]+\..+\.cpaneldcv$
   RewriteCond %{REQUEST_URI} !^/[A-F0-9]{32}\.txt(?:\ Comodo\ DCV)?$
   RewriteCond %{REQUEST_URI} !^/\.well-known/acme-challenge/[0-9a-zA-Z_-]+$
-	RewriteRule [^/]+/([\d]+)-.+-([\d]+).html showthread.php?t=$1&page=$2 [NC,L]
+  RewriteRule [^/]+/([\d]+)-.+-([\d]+).html showthread.php?t=$1&page=$2 [NC,L]
   RewriteCond %{REQUEST_URI} !^/[0-9]+\..+\.cpaneldcv$
   RewriteCond %{REQUEST_URI} !^/[A-F0-9]{32}\.txt(?:\ Comodo\ DCV)?$
   RewriteCond %{REQUEST_URI} !^/\.well-known/acme-challenge/[0-9a-zA-Z_-]+$
-	RewriteRule [^/]+/([\d]+)-.+.html showthread.php?t=$1 [NC,L]
+  RewriteRule [^/]+/([\d]+)-.+.html showthread.php?t=$1 [NC,L]
   RewriteCond %{REQUEST_URI} !^/[0-9]+\..+\.cpaneldcv$
   RewriteCond %{REQUEST_URI} !^/[A-F0-9]{32}\.txt(?:\ Comodo\ DCV)?$
   RewriteCond %{REQUEST_URI} !^/\.well-known/acme-challenge/[0-9a-zA-Z_-]+$
-	RewriteRule [^/]+/.*?/([\d]+)-.+.html showthread.php?t=$1 [NC,L]
+  RewriteRule [^/]+/.*?/([\d]+)-.+.html showthread.php?t=$1 [NC,L]
 
-	RewriteCond %{REQUEST_FILENAME} -f [OR]
-	RewriteCond %{REQUEST_FILENAME} -l [OR]
-	RewriteCond %{REQUEST_FILENAME} -d
+  RewriteCond %{REQUEST_FILENAME} -f [OR]
+  RewriteCond %{REQUEST_FILENAME} -l [OR]
+  RewriteCond %{REQUEST_FILENAME} -d
   RewriteCond %{REQUEST_URI} !^/[0-9]+\..+\.cpaneldcv$
   RewriteCond %{REQUEST_URI} !^/[A-F0-9]{32}\.txt(?:\ Comodo\ DCV)?$
   RewriteCond %{REQUEST_URI} !^/\.well-known/acme-challenge/[0-9a-zA-Z_-]+$
-	RewriteRule ^.*$ - [NC,L]
+  RewriteRule ^.*$ - [NC,L]
   RewriteCond %{REQUEST_URI} !^/[0-9]+\..+\.cpaneldcv$
   RewriteCond %{REQUEST_URI} !^/[A-F0-9]{32}\.txt(?:\ Comodo\ DCV)?$
   RewriteCond %{REQUEST_URI} !^/\.well-known/acme-challenge/[0-9a-zA-Z_-]+$
-	RewriteRule ^(data/|js/|styles/|install/|favicon\.ico|crossdomain\.xml|robots\.txt) - [NC,L]
+  RewriteRule ^(data/|js/|styles/|install/|favicon\.ico|crossdomain\.xml|robots\.txt) - [NC,L]
   RewriteCond %{REQUEST_URI} !^/[0-9]+\..+\.cpaneldcv$
   RewriteCond %{REQUEST_URI} !^/[A-F0-9]{32}\.txt(?:\ Comodo\ DCV)?$
   RewriteCond %{REQUEST_URI} !^/\.well-known/acme-challenge/[0-9a-zA-Z_-]+$
-	RewriteRule ^.*$ index.php [NC,L]
+  RewriteRule ^.*$ index.php [NC,L]
 </IfModule>
 
 htaccesstop
 
 # Template content written to bottom of .htaccess file
 HTACCESS_BOT = <<-'htaccessbot'
-
 htaccessbot
 
 PORTS = %w(80 443)
@@ -133,17 +132,18 @@ File.open("#{TMP_FILE}", 'w') do |htfile|
   htfile.write("# Any edits made to this file will be automatically overwritten!\n")
   htfile.write(HTACCESS_TOP)
   htfile.write("<RequireAll>\n")
-  htfile.write("Require all granted\n")
+  htfile.write("\tRequire all granted\n")
   options[:ports].each do |port|
     url = "#{options[:torurl]}?ip=#{IP}&port=#{port}"
     logger.info("Fetching contents from: #{url}")
     open_url(url).each_line do |line|
-      htfile.write(line) if line.start_with?('#')
+      htfile.write("\t" + line) if line.start_with?('#')
       next if line.start_with?('#')
-      htfile.write("Require not ip #{line}")
+      htfile.write("\tRequire not ip #{line}")
     end
   end
   htfile.write("</RequireAll>\n")
+  htfile.write("\n")
   htfile.write(HTACCESS_BOT)
 end
 
