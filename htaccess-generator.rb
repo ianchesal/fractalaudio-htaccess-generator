@@ -88,18 +88,18 @@ options = {
 }
 
 parser = OptionParser.new do |opts|
-	opts.banner = "Usage: htaccess-generator.rb [options]"
-	opts.on('-p', '--path path', 'Path') do |path|
-		options[:path] = path;
-	end
+  opts.banner = "Usage: htaccess-generator.rb [options]"
+  opts.on('-p', '--path path', 'Path') do |path|
+    options[:path] = path;
+  end
 
-	opts.on('-u', '--user user', 'User') do |user|
-		options[:user] = user;
-	end
+  opts.on('-u', '--user user', 'User') do |user|
+    options[:user] = user;
+  end
 
-	opts.on('-g', '--group group', 'Group') do |group|
-		options[:group] = group;
-	end
+  opts.on('-g', '--group group', 'Group') do |group|
+    options[:group] = group;
+  end
 
   opts.on('-s', '--site sitename', 'Site name') do |site|
     options[:site] = site
@@ -113,10 +113,10 @@ parser = OptionParser.new do |opts|
     options[:debug] = true
   end
 
-	opts.on('-h', '--help', 'Displays Help') do
-		puts opts
-		exit
-	end
+  opts.on('-h', '--help', 'Displays Help') do
+    puts opts
+    exit
+  end
 end
 parser.parse!
 
