@@ -12,6 +12,14 @@ require 'fileutils'
 
 # Template content written to top of .htaccess file
 HTACCESS_TOP = <<htaccesstop
+
+#	Mod_security can interfere with uploading of content such as attachments. If you
+#	cannot attach files, remove the "#" from the lines below.
+#<IfModule mod_security.c>
+#	SecFilterEngine Off
+#	SecFilterScanPOST Off
+#</IfModule>
+
 ErrorDocument 401 default
 ErrorDocument 403 default
 ErrorDocument 404 default
@@ -21,62 +29,86 @@ ErrorDocument 500 default
 ErrorDocument 501 default
 ErrorDocument 503 default
 
+## <IfModule mod_rewrite.c>
+##         RewriteEngine On
+## 
+##         #       If you are having problems with the rewrite rules, remove the "#" from the
+##         #       line that begins "RewriteBase" below. You will also have to change the path
+##         #       of the rewrite to reflect the path to your XenForo installation.
+##         #RewriteBase /xenforo
+## 
+##         #       This line may be needed to enable WebDAV editing with PHP as a CGI.
+##         #RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+## 
+##         # This is for VBSEO URL rewriting. It keeps thread links from the old VB4
+##         # forum "alive" on the new Xenforo forum.
+##         RewriteRule [^/]+/([\d]+)-.+-([\d]+).html showthread.php?t=$1&page=$2 [NC,L]
+##         RewriteRule [^/]+/([\d]+)-.+.html showthread.php?t=$1 [NC,L]
+##         RewriteRule [^/]+/.*?/([\d]+)-.+.html showthread.php?t=$1 [NC,L]
+## 
+##         RewriteCond %{DOCUMENT_ROOT}%{REQUEST_FILENAME} !-f
+##         RewriteCond %{DOCUMENT_ROOT}%{REQUEST_FILENAME} !-d
+##         RewriteCond %{DOCUMENT_ROOT}%{REQUEST_FILENAME} !-l  
+## 
+##         RewriteRule ^.*$ - [NC,L]
+##         RewriteRule ^(data/|js/|styles/|install/|favicon\.ico|crossdomain\.xml|robots\.txt) - [NC,L]
+##         RewriteRule ^.*$ index.php [NC,L]
+## </IfModule>
 
 <IfModule mod_rewrite.c>
-  RewriteEngine On
+	RewriteEngine On
 
-  #	If you are having problems with the rewrite rules, remove the "#" from the
-  #	line that begins "RewriteBase" below. You will also have to change the path
-  #	of the rewrite to reflect the path to your XenForo installation.
-  #RewriteBase /xenforo
+	#	If you are having problems with the rewrite rules, remove the "#" from the
+	#	line that begins "RewriteBase" below. You will also have to change the path
+	#	of the rewrite to reflect the path to your XenForo installation.
+	#RewriteBase /xenforo
 
-  #	This line may be needed to enable WebDAV editing with PHP as a CGI.
-  #RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+	#	This line may be needed to enable WebDAV editing with PHP as a CGI.
+	#RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
 
-  # This redirects everything to the SSL version of the site
-  RewriteCond %{HTTPS} !=on
-  RewriteRule ^/?(.*) https://forum.fractalaudio.com/$1 [R=301,L]
+	# This redirects everything to the SSL version of the site
+RewriteCond %{HTTPS} !=on
+RewriteCond %{REQUEST_URI} !^/[0-9]+\..+\.cpaneldcv$
+RewriteCond %{REQUEST_URI} !^/[A-F0-9]{32}\.txt(?:\ Comodo\ DCV)?$
+RewriteCond %{REQUEST_URI} !^/\.well-known/acme-challenge/[0-9a-zA-Z_-]+$
+	RewriteRule ^/?(.*) https://forum.fractalaudio.com/$1 [R=301,L]
 
-  # This is for VBSEO URL rewriting. It keeps thread links from the old VB4
-  # forum "alive" on the new Xenforo forum.
-  RewriteCond %{REQUEST_URI} !^/[0-9]+\..+\.cpaneldcv$
-  RewriteCond %{REQUEST_URI} !^/[A-F0-9]{32}\.txt(?:\ Comodo\ DCV)?$
-  RewriteCond %{REQUEST_URI} !^/\.well-known/acme-challenge/[0-9a-zA-Z_-]+$
-  RewriteRule [^/]+/([\d]+)-.+-([\d]+).html showthread.php?t=$1&page=$2 [NC,L]
-  RewriteCond %{REQUEST_URI} !^/[0-9]+\..+\.cpaneldcv$
-  RewriteCond %{REQUEST_URI} !^/[A-F0-9]{32}\.txt(?:\ Comodo\ DCV)?$
-  RewriteCond %{REQUEST_URI} !^/\.well-known/acme-challenge/[0-9a-zA-Z_-]+$
-  RewriteRule [^/]+/([\d]+)-.+.html showthread.php?t=$1 [NC,L]
-  RewriteCond %{REQUEST_URI} !^/[0-9]+\..+\.cpaneldcv$
-  RewriteCond %{REQUEST_URI} !^/[A-F0-9]{32}\.txt(?:\ Comodo\ DCV)?$
-  RewriteCond %{REQUEST_URI} !^/\.well-known/acme-challenge/[0-9a-zA-Z_-]+$
-  RewriteRule [^/]+/.*?/([\d]+)-.+.html showthread.php?t=$1 [NC,L]
+	# This is for VBSEO URL rewriting. It keeps thread links from the old VB4
+	# forum "alive" on the new Xenforo forum.
+RewriteCond %{REQUEST_URI} !^/[0-9]+\..+\.cpaneldcv$
+RewriteCond %{REQUEST_URI} !^/[A-F0-9]{32}\.txt(?:\ Comodo\ DCV)?$
+RewriteCond %{REQUEST_URI} !^/\.well-known/acme-challenge/[0-9a-zA-Z_-]+$
+	RewriteRule [^/]+/([\d]+)-.+-([\d]+).html showthread.php?t=$1&page=$2 [NC,L]
+RewriteCond %{REQUEST_URI} !^/[0-9]+\..+\.cpaneldcv$
+RewriteCond %{REQUEST_URI} !^/[A-F0-9]{32}\.txt(?:\ Comodo\ DCV)?$
+RewriteCond %{REQUEST_URI} !^/\.well-known/acme-challenge/[0-9a-zA-Z_-]+$
+	RewriteRule [^/]+/([\d]+)-.+.html showthread.php?t=$1 [NC,L]
+RewriteCond %{REQUEST_URI} !^/[0-9]+\..+\.cpaneldcv$
+RewriteCond %{REQUEST_URI} !^/[A-F0-9]{32}\.txt(?:\ Comodo\ DCV)?$
+RewriteCond %{REQUEST_URI} !^/\.well-known/acme-challenge/[0-9a-zA-Z_-]+$
+	RewriteRule [^/]+/.*?/([\d]+)-.+.html showthread.php?t=$1 [NC,L]
 
-  RewriteCond %{REQUEST_FILENAME} -f [OR]
-  RewriteCond %{REQUEST_FILENAME} -l [OR]
-  RewriteCond %{REQUEST_FILENAME} -d
-  RewriteCond %{REQUEST_URI} !^/[0-9]+\..+\.cpaneldcv$
-  RewriteCond %{REQUEST_URI} !^/[A-F0-9]{32}\.txt(?:\ Comodo\ DCV)?$
-  RewriteCond %{REQUEST_URI} !^/\.well-known/acme-challenge/[0-9a-zA-Z_-]+$
-  RewriteRule ^.*$ - [NC,L]
-  RewriteCond %{REQUEST_URI} !^/[0-9]+\..+\.cpaneldcv$
-  RewriteCond %{REQUEST_URI} !^/[A-F0-9]{32}\.txt(?:\ Comodo\ DCV)?$
-  RewriteCond %{REQUEST_URI} !^/\.well-known/acme-challenge/[0-9a-zA-Z_-]+$
-  RewriteRule ^(data/|js/|styles/|install/|favicon\.ico|crossdomain\.xml|robots\.txt) - [NC,L]
-  RewriteCond %{REQUEST_URI} !^/[0-9]+\..+\.cpaneldcv$
-  RewriteCond %{REQUEST_URI} !^/[A-F0-9]{32}\.txt(?:\ Comodo\ DCV)?$
-  RewriteCond %{REQUEST_URI} !^/\.well-known/acme-challenge/[0-9a-zA-Z_-]+$
-  RewriteRule ^.*$ index.php [NC,L]
+	RewriteCond %{REQUEST_FILENAME} -f [OR]
+	RewriteCond %{REQUEST_FILENAME} -l [OR]
+	RewriteCond %{REQUEST_FILENAME} -d
+RewriteCond %{REQUEST_URI} !^/[0-9]+\..+\.cpaneldcv$
+RewriteCond %{REQUEST_URI} !^/[A-F0-9]{32}\.txt(?:\ Comodo\ DCV)?$
+RewriteCond %{REQUEST_URI} !^/\.well-known/acme-challenge/[0-9a-zA-Z_-]+$
+	RewriteRule ^.*$ - [NC,L]
+RewriteCond %{REQUEST_URI} !^/[0-9]+\..+\.cpaneldcv$
+RewriteCond %{REQUEST_URI} !^/[A-F0-9]{32}\.txt(?:\ Comodo\ DCV)?$
+RewriteCond %{REQUEST_URI} !^/\.well-known/acme-challenge/[0-9a-zA-Z_-]+$
+	RewriteRule ^(data/|js/|styles/|install/|favicon\.ico|crossdomain\.xml|robots\.txt) - [NC,L]
+RewriteCond %{REQUEST_URI} !^/[0-9]+\..+\.cpaneldcv$
+RewriteCond %{REQUEST_URI} !^/[A-F0-9]{32}\.txt(?:\ Comodo\ DCV)?$
+RewriteCond %{REQUEST_URI} !^/\.well-known/acme-challenge/[0-9a-zA-Z_-]+$
+	RewriteRule ^.*$ index.php [NC,L]
 </IfModule>
-
-Order Allow,Deny
 
 htaccesstop
 
 # Template content written to bottom of .htaccess file
 HTACCESS_BOT = <<htaccessbot
-
-Allow from all
 
 htaccessbot
 
@@ -141,15 +173,18 @@ File.open("#{TMP_FILE}", 'w') do |htfile|
   htfile.write("# #{File.expand_path(__FILE__)} script.\n")
   htfile.write("# Any edits made to this file will be automatically overwritten!\n")
   htfile.write(HTACCESS_TOP)
+  htfile.write("<RequireAll>\n")
+  htfile.write("Require all granted\n")
   options[:ports].each do |port|
     url = "#{options[:torurl]}?ip=#{IP}&port=#{port}"
     logger.info("Fetching contents from: #{url}")
     open_url(url).each_line do |line|
       htfile.write(line) if line.start_with?('#')
       next if line.start_with?('#')
-      htfile.write("Deny from #{line}")
+      htfile.write("Require not ip #{line}")
     end
   end
+  htfile.write("</RequireAll>\n")
   htfile.write(HTACCESS_BOT)
 end
 
