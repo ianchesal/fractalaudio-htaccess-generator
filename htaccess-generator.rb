@@ -69,11 +69,14 @@ ErrorDocument 503 default
   RewriteRule ^.*$ index.php [NC,L]
 </IfModule>
 
-Order Deny,Allow
+Order Allow,Deny
+
 htaccesstop
 
 # Template content written to bottom of .htaccess file
 HTACCESS_BOT = <<htaccessbot
+
+Allow from all
 
 htaccessbot
 
