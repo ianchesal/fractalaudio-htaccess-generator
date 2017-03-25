@@ -1,8 +1,14 @@
 #!/usr/bin/env ruby
+#
+# See README.md for development, installation and use instructions!
+#
 require 'resolv'
 require 'net/http'
 require 'uri'
 require 'optparse'
+require 'etc'
+require 'logger'
+require 'fileutils'
 
 # Template content written to top of .htaccess file
 HTACCESS_TOP = <<htaccesstop
@@ -17,50 +23,50 @@ ErrorDocument 503 default
 
 
 <IfModule mod_rewrite.c>
-	RewriteEngine On
+  RewriteEngine On
 
-	#	If you are having problems with the rewrite rules, remove the "#" from the
-	#	line that begins "RewriteBase" below. You will also have to change the path
-	#	of the rewrite to reflect the path to your XenForo installation.
-	#RewriteBase /xenforo
+  #	If you are having problems with the rewrite rules, remove the "#" from the
+  #	line that begins "RewriteBase" below. You will also have to change the path
+  #	of the rewrite to reflect the path to your XenForo installation.
+  #RewriteBase /xenforo
 
-	#	This line may be needed to enable WebDAV editing with PHP as a CGI.
-	#RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+  #	This line may be needed to enable WebDAV editing with PHP as a CGI.
+  #RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
 
-	# This redirects everything to the SSL version of the site
+  # This redirects everything to the SSL version of the site
   RewriteCond %{HTTPS} !=on
-	RewriteRule ^/?(.*) https://forum.fractalaudio.com/$1 [R=301,L]
+  RewriteRule ^/?(.*) https://forum.fractalaudio.com/$1 [R=301,L]
 
-	# This is for VBSEO URL rewriting. It keeps thread links from the old VB4
-	# forum "alive" on the new Xenforo forum.
+  # This is for VBSEO URL rewriting. It keeps thread links from the old VB4
+  # forum "alive" on the new Xenforo forum.
   RewriteCond %{REQUEST_URI} !^/[0-9]+\..+\.cpaneldcv$
   RewriteCond %{REQUEST_URI} !^/[A-F0-9]{32}\.txt(?:\ Comodo\ DCV)?$
   RewriteCond %{REQUEST_URI} !^/\.well-known/acme-challenge/[0-9a-zA-Z_-]+$
-	RewriteRule [^/]+/([\d]+)-.+-([\d]+).html showthread.php?t=$1&page=$2 [NC,L]
+  RewriteRule [^/]+/([\d]+)-.+-([\d]+).html showthread.php?t=$1&page=$2 [NC,L]
   RewriteCond %{REQUEST_URI} !^/[0-9]+\..+\.cpaneldcv$
   RewriteCond %{REQUEST_URI} !^/[A-F0-9]{32}\.txt(?:\ Comodo\ DCV)?$
   RewriteCond %{REQUEST_URI} !^/\.well-known/acme-challenge/[0-9a-zA-Z_-]+$
-	RewriteRule [^/]+/([\d]+)-.+.html showthread.php?t=$1 [NC,L]
+  RewriteRule [^/]+/([\d]+)-.+.html showthread.php?t=$1 [NC,L]
   RewriteCond %{REQUEST_URI} !^/[0-9]+\..+\.cpaneldcv$
   RewriteCond %{REQUEST_URI} !^/[A-F0-9]{32}\.txt(?:\ Comodo\ DCV)?$
   RewriteCond %{REQUEST_URI} !^/\.well-known/acme-challenge/[0-9a-zA-Z_-]+$
-	RewriteRule [^/]+/.*?/([\d]+)-.+.html showthread.php?t=$1 [NC,L]
+  RewriteRule [^/]+/.*?/([\d]+)-.+.html showthread.php?t=$1 [NC,L]
 
-	RewriteCond %{REQUEST_FILENAME} -f [OR]
-	RewriteCond %{REQUEST_FILENAME} -l [OR]
-	RewriteCond %{REQUEST_FILENAME} -d
+  RewriteCond %{REQUEST_FILENAME} -f [OR]
+  RewriteCond %{REQUEST_FILENAME} -l [OR]
+  RewriteCond %{REQUEST_FILENAME} -d
   RewriteCond %{REQUEST_URI} !^/[0-9]+\..+\.cpaneldcv$
   RewriteCond %{REQUEST_URI} !^/[A-F0-9]{32}\.txt(?:\ Comodo\ DCV)?$
   RewriteCond %{REQUEST_URI} !^/\.well-known/acme-challenge/[0-9a-zA-Z_-]+$
-	RewriteRule ^.*$ - [NC,L]
+  RewriteRule ^.*$ - [NC,L]
   RewriteCond %{REQUEST_URI} !^/[0-9]+\..+\.cpaneldcv$
   RewriteCond %{REQUEST_URI} !^/[A-F0-9]{32}\.txt(?:\ Comodo\ DCV)?$
   RewriteCond %{REQUEST_URI} !^/\.well-known/acme-challenge/[0-9a-zA-Z_-]+$
-	RewriteRule ^(data/|js/|styles/|install/|favicon\.ico|crossdomain\.xml|robots\.txt) - [NC,L]
+  RewriteRule ^(data/|js/|styles/|install/|favicon\.ico|crossdomain\.xml|robots\.txt) - [NC,L]
   RewriteCond %{REQUEST_URI} !^/[0-9]+\..+\.cpaneldcv$
   RewriteCond %{REQUEST_URI} !^/[A-F0-9]{32}\.txt(?:\ Comodo\ DCV)?$
   RewriteCond %{REQUEST_URI} !^/\.well-known/acme-challenge/[0-9a-zA-Z_-]+$
-	RewriteRule ^.*$ index.php [NC,L]
+  RewriteRule ^.*$ index.php [NC,L]
 </IfModule>
 
 Order Deny,Allow
@@ -71,7 +77,6 @@ HTACCESS_BOT = <<htaccessbot
 
 htaccessbot
 
-IP = Resolv.getaddress('forum.fractalaudio.com')
 PORTS = %w(80 443)
 TOR_CHECK_URL = 'https://check.torproject.org/cgi-bin/TorBulkExitList.py'
 
@@ -80,9 +85,12 @@ def open_url(url)
 end
 
 options = {
-  path: '/var/xenforo/public_html',
+  path: '.',
   user: 'xenforo',
-  group: 'xenforo'
+  group: 'xenforo',
+  site: 'forum.fractalaudio.com',
+  ports: %w(80 443),
+  torurl:  'https://check.torproject.org/cgi-bin/TorBulkExitList.py'
 }
 
 parser = OptionParser.new do |opts|
@@ -99,6 +107,14 @@ parser = OptionParser.new do |opts|
 		options[:group] = group;
 	end
 
+  opts.on('-s', '--site sitename', 'Site name') do |site|
+    options[:site] = site
+  end
+
+  opts.on('-t', '--tor-url tor-url', 'Tor URL') do |torurl|
+    options[:torurl] = torurl
+  end
+
 	opts.on('-h', '--help', 'Displays Help') do
 		puts opts
 		exit
@@ -106,12 +122,22 @@ parser = OptionParser.new do |opts|
 end
 parser.parse!
 
-puts "Writing #{options[:path]}/.htaccess.tmp..."
-File.open("#{options[:path]}/.htaccess.tmp", 'w') do |htfile|
+logger = Logger.new(STDOUT)
+logger.level = Logger::INFO
+
+IP = Resolv.getaddress(options[:site])
+TMP_FILE = File.join(options[:path], '.htaccess.tmp')
+REL_FILE = File.join(options[:path], '.htaccess')
+
+logger.info("Deleting #{TMP_FILE}") if File.exist?(TMP_FILE)
+File.delete(TMP_FILE) if File.exist?(TMP_FILE)
+
+logger.info("Writing #{TMP_FILE}")
+File.open("#{TMP_FILE}", 'w') do |htfile|
   htfile.write(HTACCESS_TOP)
-  PORTS.each do |port|
-    url = "#{TOR_CHECK_URL}?ip=#{IP}&port=#{port}"
-    puts "Fetching contents from: #{url}"
+  options[:ports].each do |port|
+    url = "#{options[:torurl]}?ip=#{IP}&port=#{port}"
+    logger.info("Fetching contents from: #{url}")
     open_url(url).each_line do |line|
       htfile.write(line) if line.start_with?('#')
       next if line.start_with?('#')
@@ -121,10 +147,11 @@ File.open("#{options[:path]}/.htaccess.tmp", 'w') do |htfile|
   htfile.write(HTACCESS_BOT)
 end
 
-puts "Done writing .htaccess.tmp"
-puts "Renaming #{options[:path]}/.htaccess.tmp -> #{options[:path]}/.htaccess"
-system("mv #{options[:path]}/.htaccess.tmp #{options[:path]}/.htaccess")
-system("chown #{options[:user]}:#{options[:group]} #{options[:path]}/.htaccess")
+logger.info("Done writing #{TMP_FILE}")
+FileUtils.chown(options[:user], options[:group], TMP_FILE)
+File.chmod(0640, TMP_FILE)
+logger.info("Renaming #{TMP_FILE} -> #{REL_FILE}")
+File.rename(TMP_FILE, REL_FILE)
 
-puts "Done"
+logger.info("Done")
 exit(0)
