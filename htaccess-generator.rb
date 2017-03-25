@@ -149,7 +149,7 @@ end
 
 logger.info("Done writing #{TMP_FILE}")
 FileUtils.chown(options[:user], options[:group], TMP_FILE)
-File.chmod(0640, TMP_FILE)
+File.chmod(0644, TMP_FILE)
 logger.info("Renaming #{TMP_FILE} -> #{REL_FILE}")
 File.rename(TMP_FILE, REL_FILE)
 
