@@ -9,6 +9,7 @@ require 'optparse'
 require 'etc'
 require 'logger'
 require 'fileutils'
+require 'resolv'
 
 # Template content written to top of .htaccess file
 HTACCESS_TOP = <<-'htaccesstop'
@@ -139,10 +140,19 @@ File.open("#{TMP_FILE}", 'w') do |htfile|
   options[:ports].each do |port|
     url = "#{options[:torurl]}?ip=#{IP}&port=#{port}"
     logger.debug("Fetching contents from: #{url}")
-    open_url(url).each_line do |line|
-      htfile.write("\t" + line) if line.start_with?('#')
-      next if line.start_with?('#')
-      htfile.write("\tRequire not ip #{line}")
+    uri = URI.parse(url)
+    response = Net::HTTP.get_response(uri)
+    unless response.code == '200'
+      logger.error("Got response #{response.code} -- skipping #{url}\n#{response.body}")
+      next
+    end
+    response.body.each_line do |line|
+      line = line.strip
+      if line =~ Resolv::IPv4::Regex
+        htfile.write("\tRequire not ip #{line}\n")
+      else
+        htfile.write("\t# #{line}\n")
+      end
     end
   end
   htfile.write("</RequireAll>\n")
