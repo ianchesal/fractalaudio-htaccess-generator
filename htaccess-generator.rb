@@ -70,9 +70,6 @@ htaccesstop
 HTACCESS_BOT = <<-'htaccessbot'
 htaccessbot
 
-PORTS = %w(80 443)
-TOR_CHECK_URL = 'https://check.torproject.org/cgi-bin/TorBulkExitList.py'
-
 def open_url(url)
   Net::HTTP.get(URI.parse(url))
 end
@@ -83,7 +80,7 @@ options = {
   group: 'xenforo',
   site: 'forum.fractalaudio.com',
   ports: %w(80 443),
-  torurl:  'https://check.torproject.org/cgi-bin/TorBulkExitList.py',
+  torurl: 'https://check.torproject.org/torbulkexitlist',
   debug: false
 }
 
