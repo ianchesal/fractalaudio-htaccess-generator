@@ -23,15 +23,12 @@ ErrorDocument 500 default
 ErrorDocument 501 default
 ErrorDocument 503 default
 
+# HSTS is better than a mod_rewrite for https security
+# See: https://secure.monkeytreehosting.com/index.php/knowledgebase/138/Enable-HSTS-in-cPanel.html
+Header set Strict-Transport-Security "max-age=31536000" env=HTTPS
+
 <IfModule mod_rewrite.c>
   RewriteEngine On
-
-  # This redirects everything to the SSL version of the site
-  RewriteCond %{HTTPS} !=on
-  RewriteCond %{REQUEST_URI} !^/[0-9]+\..+\.cpaneldcv$
-  RewriteCond %{REQUEST_URI} !^/[A-F0-9]{32}\.txt(?:\ Comodo\ DCV)?$
-  RewriteCond %{REQUEST_URI} !^/\.well-known/acme-challenge/[0-9a-zA-Z_-]+$
-  RewriteRule ^/?(.*) https://forum.fractalaudio.com/$1 [R=301,L]
 
   # This is for VBSEO URL rewriting. It keeps thread links from the old VB4
   # forum "alive" on the new Xenforo forum.
